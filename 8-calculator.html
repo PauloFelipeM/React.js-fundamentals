@@ -133,6 +133,22 @@
       ]
     ]
 
+    const CalculatorContext = React.createContext()
+
+    function CalculatorProvider({ children }) {
+      const [history, setHistory] = React.useState([])
+
+      function updateHistory(operation, result) {
+        setHistory((prevHistory) => [...prevHistory, `${operation} = ${result}`])
+      }
+
+      return (
+        <CalculatorContext.Provider value={{ history, updateHistory }}>
+          {children}
+        </CalculatorContext.Provider>
+      )
+    }
+
     function CalculatorDisplay({ operation, result }) {
       return (
         <div className={`flex flex-col gap-2 px-[1.375rem] cursor-default select-none`}>
@@ -150,6 +166,7 @@
     function Calculator() {
       const [operation, setOperation] = React.useState('')
       const [result, setResult] = React.useState('')
+      const { updateHistory } = React.useContext(CalculatorContext)
 
       function handleInputClick(input) {
         if (input === 'C') {
@@ -167,6 +184,7 @@
         if (input === '=') {
           const result = eval(operation).toString()
           setResult(result)
+          updateHistory(operation, result)
           return
         }
 
@@ -212,14 +230,16 @@
     }
 
     function OperationHistory() {
+      const { history } = React.useContext(CalculatorContext)
+
       return (
         <Card className={`py-10 px-8 w-full`}>
           <Text as="h1" variant="heading" className="mb-4">Operation History</Text>
 
           <ul className="flex flex-col gap-3">
-            <Text as="li">2 + 2 = 4</Text>
-            <Text as="li">2 + 2 = 4</Text>
-            <Text as="li">2 + 2 = 4</Text>
+            {history.map((value, index) => (
+              <Text as="li" key={index}>{value}</Text>
+            ))}
           </ul>
         </Card>
       )
@@ -232,8 +252,10 @@
           flex flex-col sm:flex-row gap-2
           items-center sm:items-stretch
         `}>
-          <Calculator />
-          <OperationHistory />
+          <CalculatorProvider>
+            <Calculator />
+            <OperationHistory />
+          </CalculatorProvider>
         </main>
       )
     }
